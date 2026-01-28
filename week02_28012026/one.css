@@ -3,9 +3,12 @@
 /* 1. SELECTORS AND BASIC SYNTAX */
 /* Element Selector */
 p {
-  color: blue;
+  color: red;
 }
 
+h1 {
+  color: #b3ff00;
+}
 /* Class Selector */
 .classname {
   color: red;
