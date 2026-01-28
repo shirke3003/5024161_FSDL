@@ -7,62 +7,46 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
+            background-color: #0aa1f8;
             margin: 0;
             padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
 
         .container {
-            max-width: 500px;
-            margin: 50px auto;
-            background-color: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        h1 {
-            color: #333;
             text-align: center;
-            margin-bottom: 30px;
         }
 
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
-        }
-
-        .label {
+        .name {
+            font-size: 36px;
+            color: hwb(310 42% 0% / 0.884);
             font-weight: bold;
-            color: #555;
+            margin: 10px 0;
         }
 
-        .value {
-            color: #777;
+        .age {
+            font-size: 36px;
+            color: #4ECDC4;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .city {
+            font-size: 36px;
+            color: hsl(224, 91%, 50%);
+            font-weight: bold;
+            margin: 10px 0;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>My Details</h1>
-        <div class="detail-row">
-            <span class="label">Name:</span>
-            <span class="value">Your Name</span>
-        </div>
-        <div class="detail-row">
-            <span class="label">Email:</span>
-            <span class="value">your.email@example.com</span>
-        </div>
-        <div class="detail-row">
-            <span class="label">Location:</span>
-            <span class="value">City, Country</span>
-        </div>
-        <div class="detail-row">
-            <span class="label">Profession:</span>
-            <span class="value">Your Role</span>
-        </div>
+        <p class="name">Anushka</p>
+        <p class="age">19</p>
+        <p class="city">Mumbai</p>
     </div>
 </body>
 </html>
