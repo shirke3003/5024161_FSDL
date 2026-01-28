@@ -1,0 +1,85 @@
+/* BASIC CSS SYNTAX COMMANDS */
+
+/* 1. SELECTORS AND BASIC SYNTAX */
+/* Element Selector */
+p {
+  color: blue;
+}
+
+/* Class Selector */
+.classname {
+  color: red;
+}
+
+/* ID Selector */
+#idname {
+  color: green;
+}
+
+/* Universal Selector */
+* {
+  margin: 0;
+}
+
+
+/* 2. TEXT AND FONT PROPERTIES */
+selector {
+  color: #333;
+  font-size: 16px;
+  font-family: Arial, sans-serif;
+  font-weight: bold;
+  text-align: center;
+  text-decoration: underline;
+  line-height: 1.5;
+}
+
+
+/* 3. BOX MODEL PROPERTIES */
+selector {
+  margin: 10px;
+  padding: 15px;
+  border: 2px solid black;
+  width: 200px;
+  height: 100px;
+}
+
+
+/* 4. BACKGROUND PROPERTIES */
+selector {
+  background-color: #f0f0f0;
+  background-image: url('image.jpg');
+  background-size: cover;
+  background-position: center;
+}
+
+
+/* 5. DISPLAY AND LAYOUT */
+selector {
+  display: block; /* block, inline, inline-block, flex, grid */
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+
+/* 6. COLORS AND OPACITY */
+selector {
+  color: red;
+  color: #ff0000;
+  color: rgb(255, 0, 0);
+  opacity: 0.5;
+}
+
+
+/* 7. PSEUDO-CLASSES */
+a:hover {
+  color: purple;
+}
+
+button:active {
+  background: gray;
+}
+
+p:first-child {
+  margin-top: 0;
+}

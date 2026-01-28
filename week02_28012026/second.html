@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Hogwards Examination Board">
+    <meta name="description" content="Hogwards Exam Hall Ticket">
+    <title>Hogwards Exam Hall Ticket</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border: 3px solid black;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid black;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            color: black;
+        }
+        .header p {
+            margin: 5px 0;
+            font-weight: bold;
+        }
+        .student-info {
+            display: flex;
+            gap: 50px;
+            margin-bottom: 20px;
+        }
+        .student-details {
+            flex: 1;
+        }
+        .student-photo {
+            flex: 0 0 150px;
+            text-align: center;
+        }
+        .student-photo img {
+            width: 150px;
+            height: 180px;
+            border: 2px solid black;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            border-bottom: 1px dotted black;
+            padding-bottom: 5px;
+        }
+        .info-label {
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th {
+            background-color: black;
+            color: white;
+            padding: 10px;
+            text-align: left;
+        }
+        td {
+            padding: 10px;
+        }
+        .highlight {
+            font-weight: bold;
+        }
+        .instructions {
+            background-color: white;
+            border-left: 4px solid black;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: black;
+        }
+        .instructions ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin: 5px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            border-top: 2px solid black;
+            padding-top: 15px;
+            font-size: 12px;
+        }
+        .important {
+            background-color: white;
+            border: 2px solid black;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        form {
+            background-color: white;
+            padding: 15px;
+            margin: 20px 0;
+            border: 1px solid black;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid black;
+        }
+        button {
+            background-color: black;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER SECTION -->
+        <div class="header">
+            <h1>HOGWARDS EXAMINATION BOARD</h1>
+            <p>Admission Certificate for Examination</p>
+            <p>Academic Year: 2025-2026</p>
+        </div>
+
+        <!-- STUDENT INFORMATION SECTION WITH PHOTO -->
+        <div class="student-info">
+            <div class="student-details">
+                <h2>Student Information</h2>
+                <div class="info-row">
+                    <span class="info-label">Roll Number:</span>
+                    <span>5024161</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Name:</span>
+                    <span>Undir Shirke</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Mother's Name:</span>
+                    <span>Dr Anushka Shirke</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Date of Birth:</span>
+                    <span>11-05-2021</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Course:</span>
+                    <span class="highlight">Witch</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Guild:</span>
+                    <span>Slytherin</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Semester:</span>
+                    <span class="highlight">4th Semester</span>
+                </div>
+            </div>
+            <div class="student-photo">
+                <img src="https://i.pinimg.com/originals/d2/92/c2/d292c2272444e2aacca568095bcd52e1.jpg" alt="Student Passport Photo">
+                <p style="font-size: 12px; margin: 5px 0;"></p>
+            </div>
+        </div>
+
+        <!-- EXAMINATION SCHEDULE TABLE -->
+        <h3>Examination Schedule</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Subject Code</th>
+                    <th>Subject Name</th>
+                    <th>Exam Date</th>
+                    <th>Time</th>
+                    <th>Duration</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>CS401</td>
+                    <td>Sorchery</td>
+                    <td>22-01-2026</td>
+                    <td>09:00 AM - 12:00 PM</td>
+                    <td>3 Hours</td>
+                </tr>
+                <tr>
+                    <td>CS402</td>
+                    <td>Potions</td>
+                    <td>24-01-2026</td>
+                    <td>02:00 PM - 05:00 PM</td>
+                    <td>3 Hours</td>
+                </tr>
+                <tr>
+                    <td>CS403</td>
+                    <td>Flying</td>
+                    <td>26-01-2026</td>
+                    <td>09:00 AM - 12:00 PM</td>
+                    <td>3 Hours</td>
+                </tr>
+                <tr>
+                    <td>CS404</td>
+                    <td>Spells</td>
+                    <td>28-01-2026</td>
+                    <td>02:00 PM - 05:00 PM</td>
+                    <td>3 Hours</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- EXAM CENTER DETAILS TABLE -->
+        <h3>Examination Center Details</h3>
+        <table>
+            <tr>
+                <th>Exam Center Name</th>
+                <td>Hogwards University</td>
+            </tr>
+            <tr>
+                <th>Center Code</th>
+                <td>C-0125</td>
+            </tr>
+            <tr>
+                <th>Address</th>
+                <td>South Bombay</td>
+            </tr>
+            <tr>
+                <th>Contact Number</th>
+                <td><a href="tel:+919876543210">+91 98765 43210</a></td>
+            </tr>
+            <tr>
+                <th>Email</th>
+                <td><a href="mailto:witchyundir@college.edu">witchyundir@college.edu</a></td>
+            </tr>
+        </table>
+
+        <!-- INSTRUCTIONS SECTION -->
+        <div class="instructions">
+            <h3>📋 Important Instructions for Students</h3>
+            <ul>
+                <li><strong>Arrive Early:</strong> Report to your exam center <em>30 minutes before</em> the scheduled examination time</li>
+                <li><strong>Required Documents:</strong> Carry this hall ticket along with a valid <u>government-issued ID</u></li>
+                <li><strong>Prohibited Items:</strong> Mobile phones, calculators, and electronic devices are <strong>strictly not allowed</strong></li>
+                <li><strong>Seating:</strong> Check your roll number on the exam center notice board and sit in the designated seat</li>
+                <li><strong>Conduct:</strong> Maintain silence and follow all <strong>examination guidelines</strong></li>
+                <li><strong>Question Paper:</strong> Read the question paper carefully before starting to write</li>
+            </ul>
+        </div>
+
+        <!-- FORMATTING EXAMPLES SECTION -->
+        <h3>Campus Facilities Available</h3>
+        <p>
+            Our college provides <strong>excellent infrastructure</strong> including:<br>
+            <em>State-of-the-art computer labs</em>, 
+            <span style="text-decoration: underline;">well-equipped library</span>, 
+            and 24x7 WiFi connectivity for all students. 
+            <small>(Additional information can be found on the college website)</small>
+        </p>
+
+        <!-- FEEDBACK FORM -->
+        <div class="instructions">
+            <h3>📝 Student Feedback Form</h3>
+            <form action="#" method="post">
+                <div class="form-group">
+                    <label for="fname">Full Name:</label>
+                    <input type="text" id="fname" name="fname" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address:</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="feedback">Exam Experience Feedback:</label>
+                    <textarea id="feedback" name="feedback" rows="3" placeholder="Share your feedback about the exam..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="rating">Overall Rating:</label>
+                    <select id="rating" name="rating" style="width: 100%; padding: 8px;">
+                        <option value="">Select Rating</option>
+                        <option value="excellent">Excellent</option>
+                        <option value="good">Good</option>
+                        <option value="average">Average</option>
+                        <option value="poor">Poor</option>
+                    </select>
+                </div>
+                <button type="submit">Submit Feedback</button>
+            </form>
+        </div>
+
+        <!-- SUPREME LEADERS SECTION -->
+        <h3>Supreme Leaders</h3>
+        <div style="display: flex; gap: 30px; justify-content: center; margin: 20px 0;">
+            <div style="text-align: center;">
+                <h4>Draco Malfoy</h4>
+                <img src="https://wallpapers.com/images/hd/handsome-draco-malfoy-aesthetic-u8gy31g0g9qj98p8.jpg" alt="Draco Malfoy" style="width: 120px; height: 150px; border: 2px solid black; margin: 10px 0;">
+                <p><strong>Head of Guild</strong></p>
+            </div>
+            <div style="text-align: center;">
+                <h4>Severus Snape</h4>
+                <img src="http://images5.fanpop.com/image/photos/25700000/severus-snape-severus-snape-25786099-595-815.jpg" alt="Severus Snape" style="width: 120px; height: 150px; border: 2px solid black; margin: 10px 0;">
+                <p><strong>Supreme Advisor</strong></p>
+            </div>
+        </div>
+
+        
+        <ul>
+            <li><a href="https://www.college.edu/syllabus" target="_blank">Exam Syllabus</a></li>
+            <li><a href="https://www.college.edu/previous-papers" target="_blank">Previous Year Question Papers</a></li>
+            <li><a href="https://www.college.edu/rules" target="_blank">Examination Rules & Regulations</a></li>
+            <li><a href="https://www.college.edu/results" target="_blank">Check Results</a></li>
+        </ul>
+
+        <!-- MULTIMEDIA SECTION -->
+        <h3>📺 Virtual Tour & Information</h3>
+
+        <p>Listen to exam guidelines audio:</p>
+        <audio controls style="width: 100%; margin: 10px 0;">
+            <source src="https://www.w3schools.com/html/horse.mp3" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+
+        <!-- FOOTER SECTION -->
+        <div class="footer">
+            <p><strong>This is an official document of the College Examination Board</strong></p>
+            <p>For queries, contact: <strong>examination@college.edu</strong> | Phone: <strong>+91 22 1234 5678</strong></p>
+            <p>Issued on: 20-01-2026 | Valid until: 31-03-2026</p>
+            <p style="color: #d9534f; font-weight: bold;">Admit Card ID: ADM-2025001234-Q4</p>
+            <p><small>Printed from: College Management System v3.2</small></p>
+        </div>
+    </div>
+</body>
+</html>
