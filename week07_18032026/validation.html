@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Validation Example 2</title>
+</head>
+<body>
+
+  <h2>Login Validation</h2>
+
+  Username: <input type="text" id="user"><br><br>
+  Password: <input type="password" id="pass"><br><br>
+
+  <button onclick="check()">Login</button>
+
+  <p id="msg"></p>
+
+  <script>
+    function check() {
+      let user = document.getElementById("user").value;
+      let pass = document.getElementById("pass").value;
+
+      // Username validation
+      if (user.length < 3) {
+        document.getElementById("msg").innerHTML = "Username must be at least 3 characters";
+        return;
+      }
+
+      // Password validation (must contain a number)
+      let pattern = /[0-9]/;
+
+      if (!pattern.test(pass)) {
+        document.getElementById("msg").innerHTML = "Password must contain a number";
+        return;
+      }
+
+      // Success
+      document.getElementById("msg").innerHTML = "Login Successful ✅";
+    }
+  </script>
+
+</body>
+</html>

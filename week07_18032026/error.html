@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Simple JS Practical</title>
+</head>
+<body>
+
+  <h2>Enter Your Name and Birth Year</h2>
+
+  <!-- Form -->
+  Name: <input type="text" id="name"><br><br>
+  Birth Year: <input type="text" id="year"><br><br>
+
+  <button onclick="processData()">Submit</button>
+
+  <h3 id="output"></h3>
+
+  <script>
+    function processData() {
+      try {
+        let name = document.getElementById("name").value;
+        let year = document.getElementById("year").value;
+
+        // Validation
+        if (name === "" || year === "") {
+          throw "All fields are required!";
+        }
+
+        if (isNaN(year)) {
+          throw "Year must be a number!";
+        }
+
+        // String
+        let upperName = name.toUpperCase();
+
+        // Date
+        let currentYear = new Date().getFullYear();
+        let age = currentYear - year;
+
+        // Array
+        let data = [upperName, age];
+
+        // Output
+        document.getElementById("output").innerHTML =
+          "Name: " + data[0] + "<br>Age: " + data[1];
+
+      } catch (error) {
+        // Error Handling
+        document.getElementById("output").innerHTML = "Error: " + error;
+      }
+    }
+  </script>
+
+</body>
+</html>

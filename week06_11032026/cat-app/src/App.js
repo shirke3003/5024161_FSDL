@@ -1,35 +1,70 @@
 import React, { useState } from "react";
 
-// Component using props
-function Cat(props) {
+// Component + Props
+function ExpenseList(props) {
   return (
-    <div>
-      <h2>🐱 Happiness Level: {props.count}</h2>
-    </div>
+    <ul>
+      {props.expenses.map((exp, index) => (
+        <li key={index}>
+          {exp.name} - ₹{exp.amount}
+        </li>
+      ))}
+    </ul>
   );
 }
 
 function App() {
-
   // State
-  const [count, setCount] = useState(0);
+  const [expenses, setExpenses] = useState([]);
+  const [name, setName] = useState("");
+  const [amount, setAmount] = useState("");
 
-  // Event
-  const petCat = () => {
-    setCount(count + 1);
+  // Event (form submit)
+  const addExpense = (e) => {
+    e.preventDefault();
+
+    if (!name || !amount) return;
+
+    const newExpense = {
+      name: name,
+      amount: amount,
+    };
+
+    setExpenses([...expenses, newExpense]);
+    setName("");
+    setAmount("");
   };
 
+  // Total calculation
+  const total = expenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
+
   return (
-    <div style={{textAlign:"center"}}>
-      <h1>Pet the Cat</h1>
+    <div style={{ textAlign: "center", marginTop: "40px" }}>
+      <h1>Expense Tracker</h1>
 
-      <button onClick={petCat}>Pet 🐾</button>
+      {/* Form */}
+      <form onSubmit={addExpense}>
+        <input
+          type="text"
+          placeholder="Expense name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <input
+          type="number"
+          placeholder="Amount"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+        />
+        <button type="submit">Add</button>
+      </form>
 
-      {/* Component with Props */}
-      <Cat count={count} />
+      <h2>Total: ₹{total}</h2>
 
+      {/* Props */}
+      <ExpenseList expenses={expenses} />
     </div>
   );
 }
 
-export default App;  
+export default App;
