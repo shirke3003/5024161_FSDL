@@ -1,22 +1,48 @@
 import { useState } from "react";
 
 function App() {
-  const moods = ["😺 Happy", "😼 Mischievous", "😴 Sleepy", "🙀 Shocked", "😾 Grumpy"];
-  const [currentMood, setCurrentMood] = useState("😺 Happy");
+  const [input, setInput] = useState("");
 
-  const changeMood = () => {
-    const randomMood = moods[Math.floor(Math.random() * moods.length)];
-    setCurrentMood(randomMood);
+  const handleClick = (value) => {
+    setInput(input + value);
+  };
+
+  const calculate = () => {
+    try {
+      setInput(eval(input).toString());
+    } catch {
+      setInput("Error");
+    }
+  };
+
+  const clear = () => {
+    setInput("");
   };
 
   return (
     <div style={styles.container}>
-      <h1 style={styles.title}>Your Cat Mood</h1>
+      <div style={styles.calculator}>
+        <input
+          type="text"
+          value={input}
+          readOnly
+          style={styles.display}
+        />
 
-      <div style={styles.card}>
-        <h2 style={styles.mood}>{currentMood}</h2>
-        <button style={styles.button} onClick={changeMood}>
-          Change Mood
+        <div style={styles.buttons}>
+          {["7","8","9","/","4","5","6","*","1","2","3","-","0",".","+","="].map((btn, i) => (
+            <button
+              key={i}
+              style={styles.button}
+              onClick={() => btn === "=" ? calculate() : handleClick(btn)}
+            >
+              {btn}
+            </button>
+          ))}
+        </div>
+
+        <button style={styles.clear} onClick={clear}>
+          Clear
         </button>
       </div>
     </div>
@@ -27,31 +53,46 @@ const styles = {
   container: {
     height: "100vh",
     display: "flex",
-    flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f8f8f8",
-    fontFamily: "sans-serif",
+    backgroundColor: "#e9ecef",
+    fontFamily: "Arial",
   },
-  title: {
-    fontWeight: "300",
-    marginBottom: "30px",
-  },
-  card: {
-    padding: "40px",
-    backgroundColor: "white",
+  calculator: {
+    backgroundColor: "#222",
+    padding: "20px",
     borderRadius: "12px",
-    boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
-    textAlign: "center",
+    width: "250px",
   },
-  mood: {
-    marginBottom: "20px",
+  display: {
+    width: "100%",
+    height: "40px",
+    marginBottom: "15px",
+    textAlign: "right",
+    padding: "5px",
+    fontSize: "18px",
+    borderRadius: "6px",
+    border: "none",
+  },
+  buttons: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: "10px",
   },
   button: {
-    padding: "8px 16px",
-    border: "none",
+    padding: "12px",
+    fontSize: "16px",
     borderRadius: "6px",
-    backgroundColor: "#222",
+    border: "none",
+    cursor: "pointer",
+  },
+  clear: {
+    marginTop: "10px",
+    width: "100%",
+    padding: "10px",
+    borderRadius: "6px",
+    border: "none",
+    backgroundColor: "#ff4d4d",
     color: "white",
     cursor: "pointer",
   },
