@@ -1,4 +1,90 @@
-<script src="first.js"></script># from anywhere inside the dev container
-$ $BROWSER file:///workspaces/5024161_FSDL/week04_18022026/fjs.htmlcd /workspaces/5024161_FSDL/week04_18022026
-python3 -m http.server 8000        # starts a server on port 8000
-$BROWSER http://localhost:8000/fjs.html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Practical 4 - ES6 Implementation</title>
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            margin-top: 50px;
+        }
+        input, button {
+            padding: 8px;
+            margin: 5px;
+        }
+        #output {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Student Manager (ES6)</h2>
+
+<input type="text" id="name" placeholder="Enter Name">
+<input type="number" id="marks" placeholder="Enter Marks">
+<button id="addBtn">Add Student</button>
+
+<div id="output"></div>
+
+<script>
+
+// Array to store students (Object usage)
+let students = [];
+
+// Class (ES6 feature)
+class Student {
+    constructor(name, marks) {
+        this.name = name;
+        this.marks = marks;
+    }
+
+    getGrade() {
+        if (this.marks >= 75) return "Distinction";
+        else if (this.marks >= 60) return "First Class";
+        else if (this.marks >= 40) return "Pass";
+        else return "Fail";
+    }
+}
+
+// Function
+const addStudent = () => {
+    const name = document.getElementById("name").value;
+    const marks = parseInt(document.getElementById("marks").value);
+
+    if (!name || isNaN(marks)) {
+        alert("Please enter valid details!");
+        return;
+    }
+
+    const student = new Student(name, marks); // Object creation
+    students.push(student);
+
+    displayStudents();
+};
+
+// Loop + DOM update
+function displayStudents() {
+    let result = "";
+
+    // Loop
+    for (let i = 0; i < students.length; i++) {
+        result += `
+            <p>
+                Name: ${students[i].name} |
+                Marks: ${students[i].marks} |
+                Grade: ${students[i].getGrade()}
+            </p>
+        `;
+    }
+
+    document.getElementById("output").innerHTML = result;
+}
+
+// Event
+document.getElementById("addBtn").addEventListener("click", addStudent);
+
+</script>
+
+</body>
+</html> 
