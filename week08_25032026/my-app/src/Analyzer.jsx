@@ -57,10 +57,10 @@ export default function Analyzer() {
         />
 
         <ul>
-          {filtered.map((n, i) => (
-            <li key={i}>{n}</li>   {/* keys used */}
-          ))}
-        </ul>
+  {filtered.map((n, i) => (
+    <li key={i}>{n}</li>
+  ))}
+</ul>
       </div>
     </div>
   );
