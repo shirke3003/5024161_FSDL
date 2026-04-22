@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WildRescue 3D — Save the Forest</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #000; overflow: hidden; font-family: 'Georgia', serif; }
+  #c { display: block; width: 100vw; height: 100vh; cursor: crosshair; }
+  #hud { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+
+  /* Crosshair */
+  #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 20px; height: 20px; opacity: 0.75; }
+  #crosshair::before, #crosshair::after { content: ''; position: absolute; background: rgba(255,255,255,0.85); border-radius: 1px; }
+  #crosshair::before { width: 1.5px; height: 20px; left: 9px; top: 0; }
+  #crosshair::after { width: 20px; height: 1.5px; left: 0; top: 9px; }
+
+  /* Top-left stats */
+  #stats-tl { position: absolute; top: 16px; left: 16px; display: flex; flex-direction: column; gap: 8px; }
+  .srow { display: flex; align-items: center; gap: 8px; }
+  .sico { font-size: 13px; width: 16px; text-align: center; }
+  .bwrap { width: 120px; height: 6px; background: rgba(255,255,255,0.12); border-radius: 3px; overflow: hidden; border: 0.5px solid rgba(255,255,255,0.15); }
+  .bfill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+  .sval { font-size: 10px; color: rgba(255,255,255,0.65); min-width: 28px; }
+
+  /* Score top center */
+  #score-top { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.5); border: 0.5px solid rgba(255,215,100,0.5); color: rgba(255,215,120,0.95); font-size: 13px; padding: 5px 20px; border-radius: 20px; letter-spacing: 1px; text-align: center; white-space: nowrap; }
+  #zone-top { position: absolute; top: 50px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.5); letter-spacing: 1px; white-space: nowrap; }
+
+  /* Compass */
+  #compass { position: absolute; top: 16px; right: 16px; width: 50px; height: 50px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.25); background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.85); font-size: 11px; font-family: 'Georgia', serif; }
+
+  /* Minimap */
+  #minimap-c { position: absolute; bottom: 112px; right: 16px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.25); }
+
+  /* Animal Info Panel */
+  #animal-panel { position: absolute; top: 16px; right: 74px; width: 210px; background: rgba(0,0,0,0.6); border: 0.5px solid rgba(255,255,255,0.18); border-radius: 12px; padding: 12px; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+  #animal-panel .ap-emoji { font-size: 28px; margin-bottom: 4px; display: block; }
+  #animal-panel .ap-name { font-size: 14px; color: #fff; font-weight: bold; margin-bottom: 1px; }
+  #animal-panel .ap-species { font-size: 10px; color: rgba(200,200,200,0.7); margin-bottom: 6px; letter-spacing: 1px; text-transform: uppercase; }
+  #animal-panel .ap-cond { font-size: 11px; color: rgba(255,140,80,0.95); margin-bottom: 8px; font-style: italic; line-height: 1.4; }
+  #animal-panel .ap-hp-wrap { width: 100%; height: 5px; background: rgba(255,255,255,0.15); border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+  #animal-panel .ap-hp-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+  #animal-panel .ap-trait { font-size: 10px; color: rgba(180,240,180,0.85); margin-top: 4px; line-height: 1.4; }
+  #animal-panel .ap-status { font-size: 10px; color: rgba(255,215,100,0.9); margin-top: 6px; line-height: 1.5; }
+  #animal-panel .ap-dest { font-size: 10px; color: rgba(150,200,255,0.85); margin-top: 4px; }
+
+  /* Interact hint */
+  #interact-hint { position: absolute; bottom: 122px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.65); color: rgba(255,255,255,0.92); font-size: 12px; padding: 8px 22px; border-radius: 22px; border: 0.5px solid rgba(255,255,255,0.22); opacity: 0; transition: opacity 0.3s; text-align: center; white-space: nowrap; pointer-events: none; max-width: 94%; }
+
+  /* Carrying chips */
+  #carry-bar { position: absolute; bottom: 112px; left: 16px; display: flex; flex-direction: column; gap: 6px; }
+  .carry-chip { background: rgba(0,0,0,0.65); border: 0.5px solid rgba(150,240,150,0.45); border-radius: 12px; padding: 5px 12px; font-size: 11px; color: rgba(180,248,180,0.92); }
+
+  /* Log */
+  #log { position: absolute; bottom: 112px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.55); color: rgba(200,235,200,0.88); font-size: 11px; padding: 5px 16px; border-radius: 14px; font-style: italic; max-width: 65%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+
+  /* Notification */
+  #notif { position: absolute; top: 40%; left: 50%; transform: translate(-50%,-50%); background: rgba(0,0,0,0.82); border: 1px solid rgba(255,215,100,0.6); color: rgba(255,215,100,1); font-size: 15px; padding: 14px 30px; border-radius: 26px; opacity: 0; pointer-events: none; transition: opacity 0.4s; text-align: center; line-height: 1.6; max-width: 80%; }
+
+  /* Lock hint */
+  #lock-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(0,0,0,0.75); color: rgba(255,255,255,0.9); font-size: 16px; padding: 20px 36px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); text-align: center; line-height: 1.8; pointer-events: none; }
+  #lock-hint span { font-size: 12px; color: rgba(255,255,255,0.55); display: block; margin-top: 6px; }
+
+  /* Bottom HUD */
+  #bottom { position: fixed; bottom: 0; left: 0; right: 0; height: 108px; background: rgba(0,0,0,0.72); border-top: 0.5px solid rgba(255,255,255,0.1); pointer-events: all; display: flex; flex-direction: column; }
+  #hotbar { display: flex; padding: 7px 12px 4px; gap: 6px; align-items: center; border-bottom: 0.5px solid rgba(255,255,255,0.08); }
+  .hslot { width: 44px; height: 44px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; position: relative; transition: background 0.15s; user-select: none; }
+  .hslot:hover, .hslot.sel { background: rgba(255,255,255,0.18); border-color: rgba(255,215,100,0.8); }
+  .hslot .key { position: absolute; bottom: 1px; right: 3px; font-size: 8px; color: rgba(255,255,255,0.38); font-family: monospace; }
+  .hslot .cnt { position: absolute; top: 1px; right: 3px; font-size: 9px; color: rgba(255,215,100,0.9); font-weight: bold; }
+  .hslot .ttip { position: absolute; bottom: 48px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: #fff; font-size: 10px; padding: 3px 8px; border-radius: 6px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .hslot:hover .ttip { opacity: 1; }
+  #tip { margin-left: auto; font-size: 10px; color: rgba(255,255,255,0.28); font-style: italic; text-align: right; line-height: 1.6; }
+  #actrow { display: flex; padding: 5px 12px; gap: 5px; align-items: center; flex: 1; flex-wrap: wrap; }
+  .abtn { background: rgba(255,255,255,0.07); border: 0.5px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.88); font-size: 11px; padding: 5px 13px; border-radius: 15px; cursor: pointer; font-family: 'Georgia', serif; transition: background 0.2s; white-space: nowrap; }
+  .abtn:hover { background: rgba(255,255,255,0.2); }
+  .abtn:active { transform: scale(0.96); }
+  .abtn.green { border-color: rgba(100,230,100,0.55); color: rgba(160,248,160,0.95); }
+  .abtn.blue { border-color: rgba(100,170,255,0.55); color: rgba(160,210,255,0.95); }
+  .abtn.gold { border-color: rgba(255,215,100,0.55); color: rgba(255,215,100,0.95); }
+  .abtn.red { border-color: rgba(255,100,80,0.55); color: rgba(255,150,130,0.95); }
+</style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+
+<div id="hud">
+  <div id="crosshair"></div>
+
+  <!-- Stats top-left -->
+  <div id="stats-tl">
+    <div class="srow"><span class="sico">♥</span><div class="bwrap"><div class="bfill" id="b-hp" style="width:90%;background:linear-gradient(90deg,#e84040,#f08080)"></div></div><span class="sval" id="v-hp">90</span></div>
+    <div class="srow"><span class="sico">⚡</span><div class="bwrap"><div class="bfill" id="b-st" style="width:100%;background:linear-gradient(90deg,#4090e8,#80c8ff)"></div></div><span class="sval" id="v-st">100</span></div>
+    <div class="srow"><span class="sico">✦</span><div class="bwrap"><div class="bfill" id="b-xp" style="width:0%;background:linear-gradient(90deg,#c09020,#f0d060)"></div></div><span class="sval" id="v-xp">0</span></div>
+    <div class="srow"><span class="sico">🩺</span><div class="bwrap"><div class="bfill" id="b-kit" style="width:100%;background:linear-gradient(90deg,#20c080,#60f0b0)"></div></div><span class="sval" id="v-kit">10</span></div>
+  </div>
+
+  <div id="score-top">✦ <span id="v-score">0</span> pts &nbsp;|&nbsp; Rescued <span id="v-rescued">0</span>/7</div>
+  <div id="zone-top">🌤 Golden Hour · Forest</div>
+  <div id="compass">N</div>
+
+  <canvas id="minimap-c" width="88" height="88" style="position:absolute;bottom:112px;right:16px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.22)"></canvas>
+
+  <!-- Animal info panel -->
+  <div id="animal-panel">
+    <span class="ap-emoji" id="ap-emoji">🦌</span>
+    <div class="ap-name" id="ap-name">—</div>
+    <div class="ap-species" id="ap-species">—</div>
+    <div class="ap-cond" id="ap-cond">—</div>
+    <div class="ap-hp-wrap"><div class="ap-hp-fill" id="ap-hp" style="width:50%;background:linear-gradient(90deg,#e84040,#f09060)"></div></div>
+    <div class="ap-trait" id="ap-trait">—</div>
+    <div class="ap-status" id="ap-status">—</div>
+    <div class="ap-dest" id="ap-dest">—</div>
+  </div>
+
+  <div id="interact-hint"></div>
+  <div id="carry-bar"></div>
+  <div id="log">🌿 Click the screen to start — then WASD to move, mouse to look around</div>
+  <div id="notif"></div>
+  <div id="lock-hint">🌿 WildRescue 3D<br><b style="font-size:20px">Click to Enter the Forest</b><span>WASD = move · Mouse = look · Shift = sprint · E = carry · Space = treat</span></div>
+</div>
+
+<!-- Bottom HUD -->
+<div id="bottom">
+  <div id="hotbar">
+    <div class="hslot sel" id="hs0" onclick="selTool(0)"><span>🩺</span><span class="key">1</span><span class="cnt" id="hc0">∞</span><span class="ttip">Medkit — treat wounds</span></div>
+    <div class="hslot" id="hs1" onclick="selTool(1)"><span>🌿</span><span class="key">2</span><span class="cnt" id="hc1">5</span><span class="ttip">Food bait — gain trust</span></div>
+    <div class="hslot" id="hs2" onclick="selTool(2)"><span>💉</span><span class="key">3</span><span class="cnt" id="hc2">3</span><span class="ttip">Sedative dart</span></div>
+    <div class="hslot" id="hs3" onclick="selTool(3)"><span>🦴</span><span class="key">4</span><span class="cnt" id="hc3">4</span><span class="ttip">Splint — fix broken limbs</span></div>
+    <div class="hslot" id="hs4" onclick="selTool(4)"><span>🔦</span><span class="key">5</span><span class="cnt" id="hc4">1</span><span class="ttip">Torch — see at night</span></div>
+    <div class="hslot" id="hs5" onclick="selTool(5)"><span>📡</span><span class="key">6</span><span class="cnt" id="hc5">∞</span><span class="ttip">Scanner — locate animals</span></div>
+    <div class="hslot" id="hs6" onclick="selTool(6)"><span>🪓</span><span class="key">7</span><span class="cnt" id="hc6">1</span><span class="ttip">Axe — clear debris</span></div>
+    <div id="tip">WASD · Shift = sprint<br>E = carry · Space = treat</div>
+  </div>
+  <div id="actrow">
+    <button class="abtn green" onclick="doAction('treat')">🩺 Treat [Space]</button>
+    <button class="abtn green" onclick="doAction('pickup')">🤲 Carry [E]</button>
+    <button class="abtn" onclick="doAction('feed')">🌿 Feed [2]</button>
+    <button class="abtn" onclick="doAction('dart')">💉 Sedate [3]</button>
+    <button class="abtn" onclick="doAction('splint')">🦴 Splint [4]</button>
+    <button class="abtn blue" onclick="doAction('hospital')">🏥 Hospital</button>
+    <button class="abtn blue" onclick="doAction('adopt')">🏠 Adopt</button>
+    <button class="abtn gold" onclick="doAction('release')">🌲 Release</button>
+    <button class="abtn" onclick="doAction('scan')" style="margin-left:auto">📡 Scan Area</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ─── Renderer Setup ───────────────────────────────────────────────────────────
+const CV = document.getElementById('c');
+CV.width  = window.innerWidth;
+CV.height = window.innerHeight;
+
+const R = new THREE.WebGLRenderer({ canvas: CV, antialias: true });
+R.setSize(window.innerWidth, window.innerHeight);
+R.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+R.shadowMap.enabled = true;
+R.shadowMap.type = THREE.PCFSoftShadowMap;
+R.toneMapping = THREE.ACESFilmicToneMapping;
+R.toneMappingExposure = 1.15;
+
+const S   = new THREE.Scene();
+S.fog     = new THREE.FogExp2(0x87ceeb, 0.015);
+const CAM = new THREE.PerspectiveCamera(68, window.innerWidth / window.innerHeight, 0.1, 320);
+const CLK = new THREE.Clock();
+
+// ─── Game State ───────────────────────────────────────────────────────────────
+let gameTime = 0.3, score = 0, rescued = 0;
+let hp = 90, stamina = 100, xp = 0, kit = 10;
+let carrying = [], nearA = null, activeTool = 0;
+let camYaw = 0.3, camPitch = -0.12;
+let sprinting = false, pointerLocked = false;
+const playerPos = new THREE.Vector3(2, 0, 2);
+const keys = {};
+let frameCount = 0;
+
+// ─── Terrain Noise ────────────────────────────────────────────────────────────
+function noise2(x, z, f, o) {
+  let v = 0, a = 1, mx = 0;
+  for (let i = 0; i < o; i++) {
+    v  += Math.sin(x*f*0.31+17.3) * Math.cos(z*f*0.29+11.7) * a;
+    v  += Math.sin((x+z)*f*0.47)  * Math.cos((x-z)*f*0.23)  * a * 0.6;
+    mx += a; a *= 0.5; f *= 1.97;
+  }
+  return v / mx;
+}
+function gh(x, z) {
+  const h  = noise2(x,z,0.07,5)*9 + noise2(x,z,0.25,3)*2.5 + noise2(x,z,0.9,2)*0.5;
+  const rv = Math.max(0, 1 - Math.abs(x+18)*0.12) * 3;
+  return h - rv;
+}
+
+// ─── Sky & Lighting ───────────────────────────────────────────────────────────
+const skyMesh = new THREE.Mesh(
+  new THREE.SphereGeometry(290,16,8),
+  new THREE.MeshBasicMaterial({ color:0x87ceeb, side:THREE.BackSide })
+);
+S.add(skyMesh);
+
+const sunMesh = new THREE.Mesh(
+  new THREE.SphereGeometry(5,8,8),
+  new THREE.MeshBasicMaterial({ color:0xfffdd0 })
+);
+sunMesh.position.set(90,65,-160); S.add(sunMesh);
+
+const moonMesh = new THREE.Mesh(
+  new THREE.SphereGeometry(3,8,8),
+  new THREE.MeshBasicMaterial({ color:0xd8e8ff })
+);
+moonMesh.position.set(-80,55,100); S.add(moonMesh);
+
+const sunL = new THREE.DirectionalLight(0xfff4d0, 2.4);
+sunL.position.set(60,80,-100);
+sunL.castShadow = true;
+sunL.shadow.mapSize.set(2048,2048);
+sunL.shadow.camera.left   = -100; sunL.shadow.camera.right = 100;
+sunL.shadow.camera.top    =  100; sunL.shadow.camera.bottom = -100;
+sunL.shadow.camera.far    = 220;
+S.add(sunL);
+
+const ambL  = new THREE.AmbientLight(0x8090c0, 0.65); S.add(ambL);
+const fillL = new THREE.DirectionalLight(0xc0d8ff, 0.4); fillL.position.set(-50,30,50); S.add(fillL);
+const rimL  = new THREE.DirectionalLight(0xffd080, 0.3); rimL.position.set(0,10,80);  S.add(rimL);
+
+// ─── Ground ───────────────────────────────────────────────────────────────────
+const groundGeo = new THREE.PlaneGeometry(200, 200, 100, 100);
+groundGeo.rotateX(-Math.PI / 2);
+const gpos = groundGeo.attributes.position;
+for (let i = 0; i < gpos.count; i++) {
+  gpos.setY(i, gh(gpos.getX(i), gpos.getZ(i)));
+}
+groundGeo.computeVertexNormals();
+const groundMesh = new THREE.Mesh(
+  groundGeo,
+  new THREE.MeshLambertMaterial({ color: 0x3a7a28 })
+);
+groundMesh.receiveShadow = true;
+S.add(groundMesh);
+
+// dirt paths
+const pathMat = new THREE.MeshLambertMaterial({ color: 0x9a8060 });
+[[40,20,0.4],[20,5,0.3],[-5,30,0.35],[10,-15,0.4],[-20,-20,0.3]].forEach(([x,z,a]) => {
+  const p = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 14), pathMat);
+  p.rotation.x = -Math.PI/2; p.rotation.z = a;
+  p.position.set(x, gh(x,z)+0.02, z);
+  S.add(p);
+});
+
+// ─── Trees ────────────────────────────────────────────────────────────────────
+const leafColors = [0x1e6010,0x2a7818,0x347a20,0x268020,0x3a9028,0x1a5510,0x4a9030,0x226618];
+function makeTree(x, z, sc, type) {
+  const g  = new THREE.Group();
+  const th = (2.0 + Math.random()*1.5) * sc;
+  const trunk = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.1*sc, 0.2*sc, th, 7),
+    new THREE.MeshLambertMaterial({ color: type===1 ? 0x5a2e10 : 0x6b4020 })
+  );
+  trunk.castShadow = true; trunk.position.y = th/2; g.add(trunk);
+
+  const lc = () => leafColors[Math.floor(Math.random()*leafColors.length)];
+  if (type === 0) {
+    for (let i = 0; i < 4; i++) {
+      const r = (1.3-i*0.22)*sc*(0.88+Math.random()*0.24);
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(r, r*1.2, 8), new THREE.MeshLambertMaterial({ color:lc() }));
+      cone.position.y = th*0.65 + i*r*0.55; cone.castShadow = true; g.add(cone);
+    }
+  } else if (type === 1) {
+    const b1 = new THREE.Mesh(new THREE.SphereGeometry(1.1*sc,8,6), new THREE.MeshLambertMaterial({ color:lc() }));
+    b1.position.y = th+0.3*sc; b1.castShadow = true; g.add(b1);
+    const b2 = new THREE.Mesh(new THREE.SphereGeometry(0.75*sc,7,5), new THREE.MeshLambertMaterial({ color:lc() }));
+    b2.position.set(0.6*sc, th-0.1*sc, 0.3*sc); b2.castShadow = true; g.add(b2);
+  } else {
+    for (let i = 0; i < 3; i++) {
+      const r = (1.0-i*0.2)*sc;
+      const c = new THREE.Mesh(new THREE.ConeGeometry(r, r*2, 6), new THREE.MeshLambertMaterial({ color:lc() }));
+      c.position.y = th*0.6 + i*r*0.7; c.castShadow = true; g.add(c);
+    }
+  }
+  g.position.set(x, gh(x,z), z);
+  g.rotation.y = Math.random()*Math.PI*2;
+  S.add(g);
+}
+for (let i = 0; i < 340; i++) {
+  const a = Math.random()*Math.PI*2, r = 8 + Math.random()*75;
+  const x = Math.cos(a)*r, z = Math.sin(a)*r;
+  if (Math.abs(x+18)<5 && Math.abs(z)<25) continue;
+  if (x>44 && Math.abs(z)<20) continue;
+  makeTree(x, z, 0.65+Math.random()*0.9, Math.floor(Math.random()*3));
+}
+
+// ─── Rocks ────────────────────────────────────────────────────────────────────
+const rockMat = new THREE.MeshLambertMaterial({ color:0x706858 });
+for (let i = 0; i < 90; i++) {
+  const x = -65+Math.random()*130, z = -65+Math.random()*130;
+  const s = 0.3+Math.random()*1.2;
+  const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(s,0), rockMat);
+  rock.position.set(x, gh(x,z)+s*0.28, z);
+  rock.rotation.set(Math.random(),Math.random(),Math.random());
+  rock.castShadow = true; rock.receiveShadow = true;
+  S.add(rock);
+}
+
+// ─── Water ────────────────────────────────────────────────────────────────────
+const waterMesh = new THREE.Mesh(
+  new THREE.PlaneGeometry(16, 80),
+  new THREE.MeshLambertMaterial({ color:0x3070d8, transparent:true, opacity:0.72 })
+);
+waterMesh.rotation.x = -Math.PI/2; waterMesh.position.set(-18,-1.4,0); S.add(waterMesh);
+
+const waterFoam = new THREE.Mesh(
+  new THREE.PlaneGeometry(18,82),
+  new THREE.MeshBasicMaterial({ color:0x80b8ff, transparent:true, opacity:0.2 })
+);
+waterFoam.rotation.x = -Math.PI/2; waterFoam.position.set(-18,-1.35,0); S.add(waterFoam);
+
+// ─── City ─────────────────────────────────────────────────────────────────────
+function makeCity() {
+  const cg = new THREE.Group();
+  const blds = [[0,0,9,14,8],[14,0,7,11,6],[-9,0,7,10,5],[4,20,11,16,9],[-11,0,5,7,4],[6,-20,8,9,7]];
+  blds.forEach(([bx,bz,bw,bh,bd]) => {
+    const b = new THREE.Mesh(new THREE.BoxGeometry(bw,bh,bd), new THREE.MeshLambertMaterial({ color:0xc4b8b0 }));
+    b.position.set(bx, bh/2, bz); b.castShadow=true; b.receiveShadow=true; cg.add(b);
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(bw+0.5,0.6,bd+0.5), new THREE.MeshLambertMaterial({ color:0x907060 }));
+    roof.position.set(bx,bh+0.3,bz); cg.add(roof);
+    for (let wy=1.5; wy<bh-1; wy+=2.8) {
+      for (let wx=-bw/2+1; wx<bw/2; wx+=2.2) {
+        const win = new THREE.Mesh(new THREE.BoxGeometry(0.85,1.05,0.08),
+          new THREE.MeshLambertMaterial({ color:0xfff8e0, emissive:0xffe880, emissiveIntensity:0.3 }));
+        win.position.set(bx+wx, wy, bz+bd/2+0.04); cg.add(win);
+      }
+    }
+  });
+  // Hospital
+  const hosp = new THREE.Mesh(new THREE.BoxGeometry(12,10,10), new THREE.MeshLambertMaterial({ color:0xece4e4 }));
+  hosp.position.set(22,5,-18); hosp.castShadow=true; cg.add(hosp);
+  const cross1 = new THREE.Mesh(new THREE.BoxGeometry(1.2,5,0.2), new THREE.MeshLambertMaterial({ color:0xe03030, emissive:0xff2020, emissiveIntensity:0.3 }));
+  cross1.position.set(22,9.5,-12.9); cg.add(cross1);
+  const cross2 = new THREE.Mesh(new THREE.BoxGeometry(5,1.2,0.2), new THREE.MeshLambertMaterial({ color:0xe03030, emissive:0xff2020, emissiveIntensity:0.3 }));
+  cross2.position.set(22,9.5,-12.9); cg.add(cross2);
+  const hospSign = new THREE.Mesh(new THREE.BoxGeometry(6,1.5,0.1), new THREE.MeshLambertMaterial({ color:0xe8f0e8, emissive:0xa0c0a0, emissiveIntensity:0.2 }));
+  hospSign.position.set(22,3,-12.9); cg.add(hospSign);
+  // Shelter
+  const shelter = new THREE.Mesh(new THREE.BoxGeometry(10,7,9), new THREE.MeshLambertMaterial({ color:0x7ab870 }));
+  shelter.position.set(22,3.5,-32); shelter.castShadow=true; cg.add(shelter);
+  const sRoof = new THREE.Mesh(new THREE.ConeGeometry(8,3,4), new THREE.MeshLambertMaterial({ color:0x5a9050 }));
+  sRoof.position.set(22,8.5,-32); sRoof.rotation.y=Math.PI/4; cg.add(sRoof);
+  // Road
+  const road = new THREE.Mesh(new THREE.PlaneGeometry(7,100), new THREE.MeshLambertMaterial({ color:0x807060 }));
+  road.rotation.x=-Math.PI/2; road.position.set(11,-0.06,0); cg.add(road);
+  const rdLine = new THREE.Mesh(new THREE.PlaneGeometry(0.3,100), new THREE.MeshBasicMaterial({ color:0xf0e070 }));
+  rdLine.rotation.x=-Math.PI/2; rdLine.position.set(11,-0.05,0); cg.add(rdLine);
+  // Street lamps
+  [-20,-5,10,25,-35].forEach(lz => {
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,4,6), new THREE.MeshLambertMaterial({ color:0x808080 }));
+    pole.position.set(8,2,lz); cg.add(pole);
+    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.25,6,6), new THREE.MeshBasicMaterial({ color:0xfff8c0 }));
+    bulb.position.set(8,4.2,lz); cg.add(bulb);
+    const lampL = new THREE.PointLight(0xffe8a0,0.8,12);
+    lampL.position.set(8,4,lz); cg.add(lampL);
+  });
+  cg.position.set(52,0,0);
+  S.add(cg);
+}
+makeCity();
+
+// ─── Safe Zone ────────────────────────────────────────────────────────────────
+const szRing = new THREE.Mesh(
+  new THREE.RingGeometry(6,6.6,32),
+  new THREE.MeshBasicMaterial({ color:0x40ff20, side:THREE.DoubleSide, transparent:true, opacity:0.7 })
+);
+szRing.rotation.x=-Math.PI/2; szRing.position.set(-8,0.05,-28); S.add(szRing);
+const szFill = new THREE.Mesh(
+  new THREE.CircleGeometry(6,32),
+  new THREE.MeshBasicMaterial({ color:0x30dd10, side:THREE.DoubleSide, transparent:true, opacity:0.1 })
+);
+szFill.rotation.x=-Math.PI/2; szFill.position.set(-8,0.04,-28); S.add(szFill);
+
+// ─── Particles ────────────────────────────────────────────────────────────────
+const particles = [];
+function spawnParticles(x, y, z, color, n=25) {
+  const geo  = new THREE.BufferGeometry();
+  const verts=[], vels=[];
+  for (let i=0; i<n; i++) {
+    verts.push(x+(Math.random()-0.5)*0.5, y+Math.random()*0.4, z+(Math.random()-0.5)*0.5);
+    vels.push((Math.random()-0.5)*0.06, 0.04+Math.random()*0.07, (Math.random()-0.5)*0.06);
+  }
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(verts,3));
+  const mat = new THREE.PointsMaterial({ color, size:0.16, transparent:true, opacity:1 });
+  const pts = new THREE.Points(geo, mat);
+  S.add(pts);
+  particles.push({ pts, vels, life:80 });
+}
+// fire at fox's position
+for (let i=0;i<5;i++) setTimeout(()=>spawnParticles(6+Math.random()*2, gh(6,-19)+0.6, -19+Math.random()*2, 0xe84010, 12), i*250);
+
+// ─── Animals ──────────────────────────────────────────────────────────────────
+const ADEFS = [
+  { name:'Kira',    species:'Deer',      emoji:'🦌', x:-7,  z:-11, bodyColor:0xc8784a, headColor:0xd88858,
+    cond:'Hind leg trapped in fallen branch',              trait:'Responds to calm approach — no loud tools near her',
+    needsTool:'splint', rescue:'hospital', xpVal:25, scoreVal:180,
+    destHint:'Best taken to 🏥 Hospital — needs X-ray and surgery' },
+  { name:'Blaze',   species:'Fox',       emoji:'🦊', x:6,   z:-19, bodyColor:0xe07828, headColor:0xf08838,
+    cond:'Burned paws from wildfire — in agony',           trait:'Very aggressive when hurt — sedate with dart first',
+    needsTool:'dart',   rescue:'hospital', xpVal:20, scoreVal:160,
+    destHint:'Best taken to 🏥 Hospital — burn treatment needed' },
+  { name:'Hoot',    species:'Owl',       emoji:'🦉', x:-16, z:4,   bodyColor:0x907050, headColor:0xa08060,
+    cond:'Left wing fractured — cannot fly',               trait:'Nocturnal — more active and visible after dusk',
+    needsTool:'splint', rescue:'release',  xpVal:22, scoreVal:170,
+    destHint:'Best released in 🌲 Safe Zone — owls belong in the wild' },
+  { name:'Pip',     species:'Rabbit',    emoji:'🐰', x:4,   z:9,   bodyColor:0xd0b090, headColor:0xe0c0a0,
+    cond:'Flood survivor — cold and exhausted',            trait:'Frightened — feed her once to gain trust before treating',
+    needsTool:'medkit', rescue:'adopt',    xpVal:15, scoreVal:120,
+    destHint:'Best taken to 🏠 Shelter — perfect for adoption' },
+  { name:'Bruno',   species:'Bear Cub',  emoji:'🐻', x:-26, z:-4,  bodyColor:0x7a4828, headColor:0x8a5838,
+    cond:'Separated from mother — malnourished',           trait:'Needs feeding twice before he trusts you enough to treat',
+    needsTool:'medkit', rescue:'release',  xpVal:30, scoreVal:200,
+    destHint:'Best released in 🌲 Safe Zone — will reunite with mother' },
+  { name:'Zara',    species:'Eagle',     emoji:'🦅', x:11,  z:-30, bodyColor:0x705030, headColor:0xf0f0e0,
+    cond:'Poisoned by illegal bait — critical condition',  trait:'Powerful talons — dart required before any approach',
+    needsTool:'dart',   rescue:'hospital', xpVal:35, scoreVal:250,
+    destHint:'Best taken to 🏥 Hospital — needs antidote urgently' },
+  { name:'Mochi',   species:'Raccoon',   emoji:'🦝', x:19,  z:11,  bodyColor:0x808090, headColor:0x909090,
+    cond:'Snare wire cutting into forepaw',                trait:'Curious and clever — food bait draws it close',
+    needsTool:'medkit', rescue:'adopt',    xpVal:18, scoreVal:140,
+    destHint:'Best taken to 🏠 Shelter — very sociable, loves humans' },
+];
+
+function makeAnimalMesh(def) {
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.35,10,8), new THREE.MeshLambertMaterial({ color:def.bodyColor }));
+  body.scale.set(1.3,0.85,1.0); body.castShadow=true;
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.22,9,7), new THREE.MeshLambertMaterial({ color:def.headColor }));
+  head.position.set(0.33,0.19,0); head.castShadow=true;
+  const snout = new THREE.Mesh(new THREE.SphereGeometry(0.1,7,6), new THREE.MeshLambertMaterial({ color:def.headColor-0x101010 }));
+  snout.position.set(0.48,0.14,0); snout.scale.set(0.9,0.75,1);
+  const eye1 = new THREE.Mesh(new THREE.SphereGeometry(0.047,6,6), new THREE.MeshBasicMaterial({ color:0x111111 }));
+  eye1.position.set(0.43,0.26,0.1);
+  const eye2 = eye1.clone(); eye2.position.z = -0.1;
+  const shine1 = new THREE.Mesh(new THREE.SphereGeometry(0.018,4,4), new THREE.MeshBasicMaterial({ color:0xffffff }));
+  shine1.position.set(0.45,0.28,0.11);
+  const shine2 = shine1.clone(); shine2.position.z=-0.09;
+  const ear1 = new THREE.Mesh(new THREE.ConeGeometry(0.07,0.18,5), new THREE.MeshLambertMaterial({ color:def.headColor }));
+  ear1.position.set(0.28,0.4,0.1); ear1.rotation.z=-0.3;
+  const ear2 = ear1.clone(); ear2.position.z=-0.1; ear2.rotation.z=0.3;
+  const tail = new THREE.Mesh(new THREE.SphereGeometry(0.1,6,6), new THREE.MeshLambertMaterial({ color:def.bodyColor+0x202020 }));
+  tail.position.set(-0.42,0.1,0);
+  const leg1 = new THREE.Mesh(new THREE.CylinderGeometry(0.052,0.042,0.32,5), new THREE.MeshLambertMaterial({ color:def.bodyColor-0x101010 }));
+  leg1.position.set(0.15,-0.29,0.16); leg1.rotation.z=0.15;
+  const leg2=leg1.clone(); leg2.position.z=-0.16;
+  const leg3=leg1.clone(); leg3.position.x=-0.15; leg3.position.z=0.16;
+  const leg4=leg3.clone(); leg4.position.z=-0.16;
+  // indicator ring
+  const indRing = new THREE.Mesh(
+    new THREE.RingGeometry(0.4,0.48,20),
+    new THREE.MeshBasicMaterial({ color:0xff4040, side:THREE.DoubleSide, transparent:true, opacity:0.85 })
+  );
+  indRing.rotation.x=-Math.PI/2; indRing.position.y=-0.33;
+  const indFill = new THREE.Mesh(
+    new THREE.CircleGeometry(0.4,20),
+    new THREE.MeshBasicMaterial({ color:0xff2020, side:THREE.DoubleSide, transparent:true, opacity:0.15 })
+  );
+  indFill.rotation.x=-Math.PI/2; indFill.position.y=-0.32;
+  // HP bar (3D)
+  const hpBg = new THREE.Mesh(new THREE.PlaneGeometry(0.7,0.08), new THREE.MeshBasicMaterial({ color:0x330000, side:THREE.DoubleSide }));
+  hpBg.position.set(0,0.75,0);
+  const hpFill = new THREE.Mesh(new THREE.PlaneGeometry(0.7,0.08), new THREE.MeshBasicMaterial({ color:0xff3030, side:THREE.DoubleSide }));
+  hpFill.position.set(0,0.75,0.001);
+  g.add(body,head,snout,eye1,eye2,shine1,shine2,ear1,ear2,tail,leg1,leg2,leg3,leg4,indRing,indFill,hpBg,hpFill);
+  g.userData = { indRing, indFill, hpFill, legs:[leg1,leg2,leg3,leg4] };
+  const y = gh(def.x,def.z);
+  g.position.set(def.x, y+0.44, def.z);
+  S.add(g);
+  return g;
+}
+
+const animals = ADEFS.map(def => ({
+  ...def, mesh: makeAnimalMesh(def),
+  alive:true, rescued:false, carried:false,
+  treated:false, darted:false, splinted:false, fed:0,
+  hp: 40+Math.random()*30|0,
+  origPos:{ x:def.x, y:gh(def.x,def.z)+0.44, z:def.z },
+  wobble: Math.random()*Math.PI*2,
+  idleTimer: Math.random()*200
+}));
+
+// ─── Input ────────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  keys[e.code]=true;
+  if(e.code==='Space'){e.preventDefault(); doAction('treat');}
+  if(e.code==='KeyE') doAction('pickup');
+  if(e.code==='ShiftLeft') sprinting=true;
+  ['Digit1','Digit2','Digit3','Digit4','Digit5','Digit6','Digit7'].forEach((d,i)=>{ if(e.code===d) selTool(i); });
+});
+document.addEventListener('keyup', e => { keys[e.code]=false; if(e.code==='ShiftLeft') sprinting=false; });
+
+CV.addEventListener('click', () => { if(!pointerLocked) CV.requestPointerLock?.(); });
+document.addEventListener('pointerlockchange', () => {
+  pointerLocked = document.pointerLockElement === CV;
+  document.getElementById('lock-hint').style.display = pointerLocked ? 'none' : 'block';
+});
+document.addEventListener('mousemove', e => {
+  if(!pointerLocked) return;
+  camYaw  -= e.movementX * 0.0022;
+  camPitch = Math.max(-0.55, Math.min(0.45, camPitch - e.movementY*0.0022));
+});
+
+function selTool(i) {
+  activeTool=i;
+  document.querySelectorAll('.hslot').forEach((s,j)=>s.classList.toggle('sel',j===i));
+}
+
+// ─── Actions ──────────────────────────────────────────────────────────────────
+let notifTimer=null;
+function notify(html, dur=3200) {
+  const n=document.getElementById('notif');
+  n.innerHTML=html; n.style.opacity='1';
+  if(notifTimer) clearTimeout(notifTimer);
+  notifTimer=setTimeout(()=>n.style.opacity='0', dur);
+}
+function setLog(m){ document.getElementById('log').textContent=m; }
+
+function doAction(act) {
+  const a = nearA;
+  if (act==='treat') {
+    if (!a||!a.alive){setLog('🩺 Walk closer to an animal first!');return;}
+    if (a.needsTool==='dart'&&!a.darted){setLog(`⚠ ${a.name} is too agitated — use 💉 dart first!`);return;}
+    if (a.needsTool==='splint'&&!a.splinted){setLog(`⚠ ${a.name} needs 🦴 splint before treatment!`);return;}
+    if (a.species==='Rabbit'&&a.fed<1){setLog('🐰 Pip is scared — feed her first with 🌿!');return;}
+    if (a.species==='Bear Cub'&&a.fed<2){setLog(`🐻 Bruno needs feeding ${2-a.fed} more time(s)!`);return;}
+    if (a.treated){setLog(`✅ ${a.name} already treated — pick them up with E!`);return;}
+    a.treated=true; kit=Math.max(0,kit-1);
+    a.mesh.userData.indRing.material.color.setHex(0x40ff40);
+    a.mesh.userData.indFill.material.color.setHex(0x40ff40);
+    a.mesh.userData.hpFill.material.color.setHex(0x40cc40);
+    xp=Math.min(100,xp+Math.round(a.xpVal*0.6)); score+=30;
+    spawnParticles(a.mesh.position.x, a.mesh.position.y+0.6, a.mesh.position.z, 0x60ff60, 30);
+    notify(`🩺 <b>${a.name} treated!</b><br><small>${a.species} stabilised — carry to ${a.rescue==='hospital'?'🏥 hospital':a.rescue==='adopt'?'🏠 shelter':'🌲 safe zone'}</small>`);
+  }
+  else if (act==='dart') {
+    if (!a||!a.alive){setLog('💉 No animal to sedate nearby!');return;}
+    if (a.darted){setLog(`${a.name} is already sedated.`);return;}
+    a.darted=true; a.mesh.position.y-=0.12;
+    spawnParticles(a.mesh.position.x, a.mesh.position.y+0.5, a.mesh.position.z, 0x8888ff, 18);
+    notify(`💉 ${a.name} sedated — now use 🩺 treat!`);
+  }
+  else if (act==='splint') {
+    if (!a||!a.alive){setLog('🦴 No animal nearby to splint!');return;}
+    if (a.splinted){setLog(`${a.name} is already splinted.`);return;}
+    a.splinted=true;
+    spawnParticles(a.mesh.position.x, a.mesh.position.y+0.5, a.mesh.position.z, 0xf0c060, 14);
+    notify(`🦴 ${a.name}'s limb splinted — now use 🩺 treat!`);
+  }
+  else if (act==='feed') {
+    if (!a||!a.alive){setLog('🌿 No animal nearby to feed!');return;}
+    a.fed=(a.fed||0)+1; score+=10;
+    spawnParticles(a.mesh.position.x, a.mesh.position.y+0.5, a.mesh.position.z, 0x80ff40, 12);
+    const feedMsgs = {
+      Rabbit: ['🐰 Pip sniffs cautiously... keep going!','🐰 Pip nibbles the food — she trusts you now!'],
+      'Bear Cub': ['🐻 Bruno licks your hand... one more time!','🐻 Bruno wags his tail — he trusts you now!']
+    };
+    const msgs=feedMsgs[a.species];
+    notify(msgs ? msgs[Math.min(a.fed-1,msgs.length-1)] : `🌿 ${a.name} accepted the food!`);
+  }
+  else if (act==='pickup') {
+    if (!a||!a.alive||a.carried){setLog('🤲 No treated animal nearby!');return;}
+    if (!a.treated){setLog(`⚠ Treat ${a.name} first before carrying!`);return;}
+    if (carrying.length>=2){setLog('🎒 Already carrying 2 — deliver them first!');return;}
+    a.carried=true; a.alive=false; carrying.push(a);
+    S.remove(a.mesh); score+=20;
+    updateCarryBar();
+    notify(`🤲 Carrying <b>${a.name}</b> the ${a.species}!<br><small>${a.destHint}</small>`);
+  }
+  else if (act==='hospital') {
+    if (carrying.length===0){setLog('🏥 Not carrying any animals!');return;}
+    const d=new THREE.Vector3(playerPos.x-74,0,playerPos.z+18).length();
+    if (d>38){setLog('🏥 Head east to reach the city hospital!');return;}
+    let pts=0; const names=[];
+    carrying.forEach(c=>{ pts+=c.scoreVal+(c.treated?80:0); xp=Math.min(100,xp+c.xpVal); rescued++; names.push(c.name); });
+    score+=pts;
+    spawnParticles(74,4,-18, 0x4080ff, 45);
+    notify(`🏥 <b>${names.join(' & ')}</b> admitted to hospital!<br><small>+${pts} pts — on the road to recovery ✨</small>`, 4000);
+    carrying=[]; updateCarryBar();
+  }
+  else if (act==='adopt') {
+    if (carrying.length===0){setLog('🏠 Not carrying any animals!');return;}
+    const d=new THREE.Vector3(playerPos.x-74,0,playerPos.z+32).length();
+    if (d>38){setLog('🏠 Head east to the city shelter!');return;}
+    let pts=0; const names=[];
+    carrying.forEach(c=>{ pts+=c.scoreVal+(c.treated?60:0); xp=Math.min(100,xp+c.xpVal); rescued++; names.push(c.name); });
+    score+=pts;
+    spawnParticles(74,4,-32, 0x80ff80, 45);
+    notify(`🏠 <b>${names.join(' & ')}</b> placed for adoption!<br><small>+${pts} pts — going to loving homes 🏠</small>`, 4000);
+    carrying=[]; updateCarryBar();
+  }
+  else if (act==='release') {
+    if (carrying.length===0){setLog('🌲 Not carrying any animals!');return;}
+    const d=new THREE.Vector3(playerPos.x+8,0,playerPos.z+28).length();
+    if (d>14){setLog('🌲 Find the glowing green Safe Zone (SW) to release!');return;}
+    let pts=0; const names=[];
+    carrying.forEach(c=>{
+      pts+=c.scoreVal+(c.treated?70:0); xp=Math.min(100,xp+c.xpVal); rescued++; names.push(c.name);
+      c.alive=true; c.carried=false; c.rescued=true;
+      c.mesh.position.set(-8+Math.random()*4, gh(-8,-28)+0.44, -28+Math.random()*4);
+      S.add(c.mesh);
+      spawnParticles(-8,2,-28, 0x40ff20, 45);
+    });
+    score+=pts;
+    notify(`🌲 <b>${names.join(' & ')}</b> released into the wild!<br><small>+${pts} pts — free at last 🌿</small>`, 4000);
+    carrying=[]; updateCarryBar();
+  }
+  else if (act==='scan') {
+    const alive=animals.filter(a=>a.alive&&!a.carried);
+    if (alive.length===0){notify('📡 All animals accounted for! Mission nearly complete.');return;}
+    const sorted=alive.sort((a,b)=>
+      a.mesh.position.distanceTo(new THREE.Vector3(playerPos.x,0,playerPos.z))-
+      b.mesh.position.distanceTo(new THREE.Vector3(playerPos.x,0,playerPos.z)));
+    const cl=sorted[0];
+    const d=cl.mesh.position.distanceTo(new THREE.Vector3(playerPos.x,0,playerPos.z));
+    notify(`📡 <b>${cl.name}</b> detected ${Math.round(d)}m away<br><small>${cl.cond}<br>Needs: ${cl.needsTool}</small>`);
+    spawnParticles(cl.mesh.position.x, cl.mesh.position.y+1, cl.mesh.position.z, 0xffcc00, 20);
+  }
+  updateUI();
+}
+
+// ─── UI Helpers ───────────────────────────────────────────────────────────────
+function updateCarryBar() {
+  document.getElementById('carry-bar').innerHTML =
+    carrying.map(c=>`<div class="carry-chip">${c.emoji} ${c.name}</div>`).join('');
+}
+
+function updateAnimalPanel(a) {
+  const pan=document.getElementById('animal-panel');
+  if (!a){ pan.style.opacity='0'; return; }
+  pan.style.opacity='1';
+  document.getElementById('ap-emoji').textContent=a.emoji;
+  document.getElementById('ap-name').textContent=a.name;
+  document.getElementById('ap-species').textContent=a.species;
+  document.getElementById('ap-cond').textContent=a.cond;
+  const pct=a.treated?85:a.darted?40:50;
+  document.getElementById('ap-hp').style.width=pct+'%';
+  document.getElementById('ap-hp').style.background=
+    a.treated?'linear-gradient(90deg,#40c040,#80ff80)':'linear-gradient(90deg,#e84040,#f09060)';
+  document.getElementById('ap-trait').textContent='💡 '+a.trait;
+  // step chain
+  const steps=[];
+  if (a.needsTool==='dart'&&!a.darted)     steps.push('💉 [3] Sedate');
+  if (a.needsTool==='splint'&&!a.splinted) steps.push('🦴 [4] Splint');
+  if (a.species==='Rabbit'&&a.fed<1)       steps.push('🌿 [2] Feed x1');
+  if (a.species==='Bear Cub'&&a.fed<2)     steps.push(`🌿 [2] Feed x${2-a.fed}`);
+  if (!a.treated) steps.push('🩺 [Space] Treat');
+  else            steps.push('🤲 [E] Carry!');
+  document.getElementById('ap-status').textContent=steps.join(' → ');
+  document.getElementById('ap-dest').textContent=a.destHint;
+}
+
+function updateUI() {
+  document.getElementById('b-hp').style.width=hp+'%';   document.getElementById('v-hp').textContent=hp;
+  document.getElementById('b-st').style.width=stamina+'%'; document.getElementById('v-st').textContent=Math.round(stamina);
+  document.getElementById('b-xp').style.width=xp+'%';   document.getElementById('v-xp').textContent=Math.round(xp);
+  document.getElementById('b-kit').style.width=(kit/10)*100+'%'; document.getElementById('v-kit').textContent=kit;
+  document.getElementById('v-score').textContent=score;
+  document.getElementById('v-rescued').textContent=rescued;
+}
+
+// ─── Minimap ──────────────────────────────────────────────────────────────────
+const mmC=document.getElementById('minimap-c');
+const mmX=mmC.getContext('2d');
+function drawMM() {
+  mmX.clearRect(0,0,88,88);
+  mmX.fillStyle='rgba(5,18,5,0.92)'; mmX.beginPath(); mmX.arc(44,44,44,0,Math.PI*2); mmX.fill();
+  const sc=0.55;
+  animals.forEach(a=>{
+    if (!a.alive&&!a.carried) return;
+    const mx=44+(a.origPos.x-playerPos.x)*sc, my=44+(a.origPos.z-playerPos.z)*sc;
+    mmX.fillStyle=a.rescued?'#30ff10':a.treated?'#40cc40':a.darted?'#8080ff':'#ffaa20';
+    mmX.beginPath(); mmX.arc(mx,my,3.5,0,Math.PI*2); mmX.fill();
+  });
+  // city marker
+  const cm=[44+(74-playerPos.x)*sc, 44+(0-playerPos.z)*sc];
+  if (cm[0]>2&&cm[0]<86&&cm[1]>2&&cm[1]<86) {
+    mmX.fillStyle='rgba(100,160,255,0.75)'; mmX.fillRect(cm[0]-3.5,cm[1]-3.5,7,7);
+  }
+  // safe zone marker
+  const sm=[44+(-8-playerPos.x)*sc, 44+(-28-playerPos.z)*sc];
+  if (sm[0]>2&&sm[0]<86&&sm[1]>2&&sm[1]<86) {
+    mmX.fillStyle='rgba(50,255,30,0.65)'; mmX.beginPath(); mmX.arc(sm[0],sm[1],5,0,Math.PI*2); mmX.fill();
+  }
+  // player dot
+  mmX.fillStyle='#ffffff'; mmX.beginPath(); mmX.arc(44,44,4,0,Math.PI*2); mmX.fill();
+  // direction indicator
+  mmX.strokeStyle='rgba(255,255,255,0.6)'; mmX.lineWidth=1.5;
+  mmX.beginPath(); mmX.moveTo(44,44);
+  mmX.lineTo(44+Math.sin(camYaw)*15, 44-Math.cos(camYaw)*15); mmX.stroke();
+  mmX.strokeStyle='rgba(255,255,255,0.18)'; mmX.lineWidth=1;
+  mmX.beginPath(); mmX.arc(44,44,43,0,Math.PI*2); mmX.stroke();
+}
+
+// ─── Main Loop ────────────────────────────────────────────────────────────────
+function loop() {
+  requestAnimationFrame(loop);
+  const dt = Math.min(CLK.getDelta(), 0.05);
+  frameCount++;
+  gameTime = (gameTime + dt*0.003) % 1;
+
+  // Sky / lighting
+  const day   = gameTime>=0.25&&gameTime<0.75;
+  const dusk  = gameTime>=0.75&&gameTime<0.88;
+  const dawn  = gameTime>=0.12&&gameTime<0.25;
+  const night = gameTime<0.12||gameTime>=0.88;
+  const skyCol = night ? new THREE.Color(0x0a1228) :
+                 dusk  ? new THREE.Color(0xf07030) :
+                 dawn  ? new THREE.Color(0xff9848) :
+                         new THREE.Color(0x87ceef);
+  S.fog.color.copy(skyCol); R.setClearColor(skyCol,1); skyMesh.material.color.copy(skyCol);
+  sunL.intensity   = night?0.08:dusk?1.2:dawn?1.0:2.4;
+  sunL.color.setHex(night?0x2040a0:dusk?0xff8040:dawn?0xff9860:0xfff4d0);
+  ambL.intensity   = night?0.22:0.65;
+  fillL.intensity  = night?0.1:0.4;
+
+  // Water animation
+  const t = Date.now()*0.001;
+  waterMesh.position.y = -1.4 + Math.sin(t*0.6)*0.04;
+  szRing.material.opacity = 0.5 + Math.sin(t*2)*0.25;
+  sunMesh.visible = !night; moonMesh.visible = night;
+
+  // Player movement
+  const spd = (sprinting ? 7.5 : 3.8) * dt;
+  const fwd = new THREE.Vector3(-Math.sin(camYaw),0,-Math.cos(camYaw));
+  const rgt = new THREE.Vector3( Math.cos(camYaw),0,-Math.sin(camYaw));
+  let mv=false;
+  if (keys['KeyW']||keys['ArrowUp'])    { playerPos.addScaledVector(fwd, spd); mv=true; }
+  if (keys['KeyS']||keys['ArrowDown'])  { playerPos.addScaledVector(fwd,-spd); mv=true; }
+  if (keys['KeyA']||keys['ArrowLeft'])  { playerPos.addScaledVector(rgt,-spd); mv=true; }
+  if (keys['KeyD']||keys['ArrowRight']) { playerPos.addScaledVector(rgt, spd); mv=true; }
+  playerPos.x = Math.max(-82,Math.min(82,playerPos.x));
+  playerPos.z = Math.max(-82,Math.min(82,playerPos.z));
+  if (mv&&sprinting) stamina=Math.max(0,stamina-dt*18);
+  else               stamina=Math.min(100,stamina+dt*14);
+
+  // Camera
+  const gY = gh(playerPos.x,playerPos.z);
+  const bob = mv ? Math.sin(t*6)*0.055 : 0;
+  CAM.position.set(playerPos.x, gY+1.72+bob, playerPos.z);
+  const ld = new THREE.Vector3(
+    -Math.sin(camYaw)*Math.cos(camPitch),
+     Math.sin(camPitch),
+    -Math.cos(camYaw)*Math.cos(camPitch)
+  );
+  CAM.lookAt(CAM.position.clone().add(ld));
+
+  // Animal update
+  let minD=Infinity; nearA=null;
+  animals.forEach((a,i)=>{
+    if (!a.alive) return;
+    a.wobble += dt*1.2;
+    a.mesh.position.y = a.origPos.y + Math.sin(a.wobble)*0.05 + (a.darted?-0.14:0);
+    if (!a.darted) {
+      a.mesh.rotation.y += dt*(0.3+Math.sin(a.wobble*0.4)*0.18);
+      a.idleTimer-=dt;
+      if (a.idleTimer<0 && !a.treated) {
+        const dx=(Math.random()-0.5)*1.5, dz=(Math.random()-0.5)*1.5;
+        a.mesh.position.x += (a.origPos.x+dx - a.mesh.position.x)*0.25;
+        a.mesh.position.z += (a.origPos.z+dz - a.mesh.position.z)*0.25;
+        a.idleTimer = 1.8+Math.random()*2;
+      }
+    }
+    // leg animation
+    if (a.mesh.userData.legs) {
+      a.mesh.userData.legs.forEach((l,li)=>{
+        l.rotation.z = 0.15 + Math.sin(t*(a.darted?0.5:2)+li*Math.PI)*( a.darted?0.05:0.22);
+      });
+    }
+    // HP bar billboard
+    if (a.mesh.userData.hpFill) {
+      a.mesh.userData.hpFill.lookAt(CAM.position);
+      a.mesh.userData.hpBg?.lookAt?.(CAM.position);
+    }
+    // indicator
+    const ring=a.mesh.userData.indRing, fill=a.mesh.userData.indFill;
+    const d=a.mesh.position.distanceTo(new THREE.Vector3(playerPos.x,a.mesh.position.y,playerPos.z));
+    if (d<3.5) {
+      ring.material.color.setHex(0xffcc00);
+      ring.material.opacity=0.9+Math.sin(t*5)*0.1;
+      fill.material.opacity=0.28;
+    } else {
+      ring.material.color.setHex(a.treated?0x40ff40:0xff4040);
+      ring.material.opacity=0.55+Math.sin(t*2+i)*0.15;
+      fill.material.opacity=0.1;
+    }
+    if (d<5&&d<minD) { minD=d; nearA=a; }
+  });
+  if (minD>5) nearA=null;
+
+  // Interact hint + panel
+  const hint=document.getElementById('interact-hint');
+  if (nearA) {
+    hint.style.opacity='1';
+    const steps=[];
+    if (nearA.needsTool==='dart'&&!nearA.darted)     steps.push('[3] Sedate');
+    else if (nearA.needsTool==='splint'&&!nearA.splinted) steps.push('[4] Splint');
+    else if (nearA.species==='Rabbit'&&nearA.fed<1)  steps.push('[2] Feed');
+    else if (nearA.species==='Bear Cub'&&nearA.fed<2) steps.push(`[2] Feed x${2-nearA.fed}`);
+    else if (!nearA.treated) steps.push('[Space] Treat');
+    else steps.push('[E] Carry');
+    hint.textContent=`${nearA.emoji} ${nearA.name} · ${steps.join(' → ')} · ${nearA.cond}`;
+    updateAnimalPanel(nearA);
+  } else {
+    hint.style.opacity='0';
+    updateAnimalPanel(null);
+  }
+
+  // Particles
+  particles.forEach((p,i)=>{
+    p.life--;
+    const pos=p.pts.geometry.attributes.position.array;
+    for (let j=0;j<pos.length;j+=3) { pos[j]+=p.vels[j]; pos[j+1]+=p.vels[j+1]; pos[j+2]+=p.vels[j+2]; }
+    p.pts.geometry.attributes.position.needsUpdate=true;
+    p.pts.material.opacity=p.life/80;
+    if (p.life<=0) { S.remove(p.pts); particles.splice(i,1); }
+  });
+
+  // Compass
+  const dirs=['N','NE','E','SE','S','SW','W','NW'];
+  document.getElementById('compass').textContent=dirs[Math.round(((camYaw%(Math.PI*2))/(Math.PI*2)*8+8))%8];
+
+  // Zone label
+  const cx=playerPos.x, cz=playerPos.z;
+  let zone='Forest';
+  if (cx>46)                             zone='City';
+  else if (Math.abs(cx+8)<8&&Math.abs(cz+28)<8) zone='Safe Zone ✦';
+  else if (Math.abs(cx+18)<7&&Math.abs(cz)<22)  zone='River';
+  else if (cz<-22)                       zone='Deep Forest';
+  else if (cz>18)                        zone='Northern Meadow';
+  document.getElementById('zone-top').textContent=
+    (night?'🌙':dusk?'🌆':dawn?'🌅':'🌤')+' '+(night?'Night':dusk?'Dusk':dawn?'Dawn':'Day')+' · '+zone;
+
+  if (frameCount%3===0) { drawMM(); updateUI(); }
+
+  // Win condition
+  if (rescued===7) notify('🏆 <b>All animals saved!</b><br><small>You are a true Wildlife Rescuer — Final score: '+score+'</small>', 999999);
+
+  R.render(S,CAM);
+}
+
+loop(); updateUI();
+
+window.addEventListener('resize', ()=>{
+  R.setSize(window.innerWidth, window.innerHeight);
+  CAM.aspect = window.innerWidth/window.innerHeight;
+  CAM.updateProjectionMatrix();
+});
+</script>
+</body>
+</html>
